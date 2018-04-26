@@ -1,6 +1,6 @@
 #'
 #' @export
-bin_tracking_data <- function(data, resolution) {
+bin_tracking_data <- function(data, resolution = 1000, temporal = "%Y-%m-%d") {
   lonlat <- CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')
   equalarea <- CRS('+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0')
 
@@ -15,9 +15,8 @@ bin_tracking_data <- function(data, resolution) {
   data %>%
     mutate(
       cells,
-      weeks = lubridate::week(dates),
-      years = lubridate::year(dates)) %>%
-    group_by(cells, weeks, years, organismID) %>%
+      time = format(dates, temporal)) %>%
+    group_by(cells, time, organismID) %>%
     arrange(organismID, eventDate) %>%
     summarise(
       decimalLongitude = first(decimalLongitude),
