@@ -1,0 +1,26 @@
+Package: ziptrack
+Title: Binning and analysis of tracking data
+Description: Binning and analysis of tracking data
+Version: 0.0.0.9000
+Date: 2018-04-25
+Authors@R: c(
+    person("Samuel", "Bosch", , "mail@samuelbosch.com", role = c("cre", "aut")),
+    person("Pieter", "Provoost", , "pieterprovoost@gmail.com", role = "aut"),
+    person("Ward", "Appeltans", role = "ctb"),
+    person(, "OBIS", , "support@iobis.org", role = "cph")
+    )
+Depends:
+    R (>= 3.2.2)
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+    knitr,
+    dplyr,
+    raster,
+    sp,
+    ggplot2,
+    sf
+Suggests:
+    testthat
+RoxygenNote: 6.0.1
