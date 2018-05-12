@@ -3,6 +3,3 @@
 export(bin_tracking_data)
 import(dplyr)
 import(ggplot2)
-import(raster)
-import(sf)
-import(sp)
