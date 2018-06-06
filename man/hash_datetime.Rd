@@ -14,7 +14,7 @@ string literals: \code{"day"}, \code{"week"}, \code{"month"}, \code{"year"}
 or a date time format string e.g. \code{"\%Y-\%m-\%d"}.}
 }
 \value{
-character vector with a unique characters for each bin.
+character vector with unique characters for each bin.
 }
 \description{
 Hash dates according to the given temporal resolution.

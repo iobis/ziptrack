@@ -22,5 +22,6 @@ Imports:
     ggplot2,
     sf
 Suggests:
-    testthat
+    testthat,
+    lubridate
 RoxygenNote: 6.0.1

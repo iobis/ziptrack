@@ -6,13 +6,20 @@
 #' @param resolution Temporal resolution to be used. Either one of the following
 #'   string literals: \code{"day"}, \code{"week"}, \code{"month"}, \code{"year"}
 #'   or a date time format string e.g. \code{"\%Y-\%m-\%d"}.
-#' @return character vector with a unique characters for each bin.
+#' @return character vector with unique characters for each bin.
 hash_datetime <- function(dates, resolution = "week") {
+  if(is.null(dates)) {
+    return(NULL)
+  }
+  if(!inherits(dates, 'Date') && !inherits(dates, 'POSIXct')) {
+    stop("dates should be valid Date objects")
+  }
+
   formats <- list(day = "%Y-%m-%d", month = "%Y-%m", year = "%Y")
   fmtstring <- formats[[resolution]]
   if(resolution == "week") {
     # create week bins that work with the end/beginning of the year ("%Y-%V" does not work)
-    refdate <- lubridate::as_date("0000-01-03") ## Monday 3 Jan in year 0 => reference day
+    refdate <- as.Date("0000-01-03") ## Monday 3 Jan in year 0 => reference day
     if(!all(dates >= refdate)) {
       stop("Some dates are before 0000-01-03")
     }
@@ -30,11 +37,34 @@ hash_datetime <- function(dates, resolution = "week") {
 }
 
 
+#' Bin tracking data
 #'
+#' Aggregate tracking data with a specific spatial and temporal resolution
+#'
+#' @param data Tracking data to be aggregated with the columns
+#'   \code{"organismID"}, \code{"decimalLongitude"}, \code{"decimalLatitude"},
+#'   \code{"eventDate"} and optionally \code{"detections"}.
+#' @param spatial Spatial resolution in meters to be used to aggregate the data
+#'   (default \code{1000}).
+#' @param temporal Temporal resolution to be used to aggregate the data (default
+#'   \code{"week"}).
+#' @return Data frame with columns \code{"organismID"}, \code{"decimalLongitude"},
+#'   \code{"decimalLatitude"}, \code{"eventDateArrival, \code{"eventDateDeparture"}
+#'   and \code{"detections"}.
+#' @details The aggregation is done in a spatiotemporal grid based on the
+#'   provided spatial and temporal resolution. The spatial aggregation is done
+#'   on a Behrmann equal area grid with as cell size the specified spatial
+#'   resolution in meters. The temporal aggregation accepts either on of the
+#'   following string literals: \code{"day"}, \code{"week"}, \code{"month"},
+#'   \code{"year"} or a date time format string e.g. \code{"\%Y-\%m-\%d"}
 #' @export
-bin_tracking_data <- function(data, spatial = 1000, temporal = "%Y-%V") {
+bin_tracking_data <- function(data, spatial = 1000, temporal = 'week') {
   lonlat <- sp::CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')
   equalarea <- sp::CRS('+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0')
+
+  if((!inherits(data$eventDate, 'Date') && !inherits(data$eventDate, 'POSIXct')) || anyNA(data$eventDate) || is.null(data$eventDate)) {
+    stop("eventDate values should be valid Date objects")
+  }
 
   if (!"detections" %in% names(data)) {
     data$detections <- rep(1, nrow(data))
