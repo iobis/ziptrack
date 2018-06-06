@@ -25,25 +25,42 @@ test_that("hash datetime by day works", {
 })
 
 test_that("hash datetime by month works", {
-
+  dates <- lubridate::as_datetime(c('2018-01-01 12:33:44', '2018-01-08', '2018-02-01 12:23:00'))
+  hash <- ziptrack:::hash_datetime(dates, resolution = "month")
+  expect_equal(hash[1], hash[2])
+  expect_false(hash[1] == hash[3])
 })
 
 test_that("hash datetime by year works", {
-
-})
-
-test_that("hash datetime by format works", {
-
+  dates <- lubridate::as_datetime(c('2018-01-01 12:33:44', '2018-01-08', '2017-01-01 12:23:00', '2017-12-31 12:23:00'))
+  hash <- ziptrack:::hash_datetime(dates, resolution = "year")
+  expect_equal(hash[1], hash[2])
+  expect_false(hash[1] == hash[3])
+  expect_false(hash[1] == hash[4])
 })
 
 test_that("hash datetime by week works", {
-
+  dates <- lubridate::as_datetime(c('2018-01-01 12:33:44', '2018-01-06', '2017-01-12 12:23:00', '2017-12-31 12:23:00'))
+  hash <- ziptrack:::hash_datetime(dates, resolution = "year")
+  expect_equal(hash[1], hash[2])
+  expect_false(hash[1] == hash[3])
+  expect_false(hash[1] == hash[4])
 })
 
-test_that("hash datetime by week throws exception before '0000-01-04'", {
+test_that("hash datetime by format works", {
+  dates <- lubridate::as_datetime(c('2018-01-01 12:33:44', '2017-03-01', '2018-01-02 12:33:44'))
+  hash <- ziptrack:::hash_datetime(dates, resolution = "%d")
+  expect_equal(hash[1], hash[2])
+  expect_false(hash[1] == hash[3])
+})
 
+test_that("hash datetime by week throws exception before '0000-01-03'", {
+  dates <- lubridate::as_datetime(c('0000-01-02 12:33:44'))
+  expect_error(ziptrack:::hash_datetime(dates, resolution = 'week'))
 })
 
 test_that("hash datetime with invalid format fails", {
-
+  dates <- lubridate::as_datetime(c('2018-01-01 12:33:44', '2017-03-01', '2018-01-02 12:33:44'))
+  expect_error(ziptrack:::hash_datetime(dates, resolution = 'aeek'))
+  expect_error(ziptrack:::hash_datetime(dates, resolution = '%o'))
 })

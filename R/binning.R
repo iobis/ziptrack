@@ -13,15 +13,18 @@ hash_datetime <- function(dates, resolution = "week") {
   if(resolution == "week") {
     # create week bins that work with the end/beginning of the year ("%Y-%V" does not work)
     refdate <- lubridate::as_date("0000-01-03") ## Monday 3 Jan in year 0 => reference day
-    if(any(dates <= refdate)) {
-      stop("Some dates are before 0000-01-04")
+    if(!all(dates >= refdate)) {
+      stop("Some dates are before 0000-01-03")
     }
-    bins <- as.character(floor(difftime(dates, refdate,units = "days") / 7))
+    bins <- as.character(floor(difftime(dates, refdate, units = "days") / 7))
   } else {
     if(is.null(fmtstring)) {
       fmtstring <- resolution
     }
     bins <- (format(dates, fmtstring))
+    if(all(bins == sub('%', '', fmtstring))) {
+      stop('Invalid datetime resolution')
+    }
   }
   bins
 }
