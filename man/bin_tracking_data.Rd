@@ -17,6 +17,11 @@ bin_tracking_data(data, spatial = 1000, temporal = "week")
 \item{temporal}{Temporal resolution to be used to aggregate the data (default
 \code{"week"}).}
 }
+\value{
+Data frame with columns \code{"organismID"}, \code{"decimalLongitude"},
+  \code{"decimalLatitude"}, \code{"eventDateArrival"}, \code{"eventDateDeparture"}
+  and \code{"detections"}.
+}
 \description{
 Aggregate tracking data with a specific spatial and temporal resolution
 }

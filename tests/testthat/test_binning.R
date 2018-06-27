@@ -18,23 +18,55 @@ test_that("simple binning works without detections", {
   expect_equal(b$eventDateDeparture, max(d$eventDate))
 })
 
-test_that("advanced binning works", {
-  # test data: 3 times same cell then different cell 3 times then 1st cell 3 times then next week same cell then different spot
-  # TODO
+advanced_binning_test_data <- function() {
+  # test data: organism1 3 times same cell then different cell 2 times then 1st cell 3 times then next week same cell
+  # and organism2 records for the same period
   d <- data.frame(organismID='o1',
-                  decimalLongitude = c(0.00001, 0.00001),
-                  decimalLatitude = c(1.00001, 1.00001),
-                  eventDate = as.Date(c('2018-06-06', '2018-06-07')))
+                  decimalLongitude = c(0.00001, 0.00002, 0.00003,
+                                       0.50001, 0.50002,
+                                       0.00001, 0.00002, 0.00003,
+                                       0.00001),
+                  decimalLatitude = c(1.00001, 1.00001, 1.00001,
+                                      2.00001, 2.00001,
+                                      1.00001, 1.00001, 1.00001,
+                                      1.00001 ),
+                  eventDate = as.Date(c('2018-06-05', '2018-06-06', '2018-06-06',
+                                        '2018-06-06', '2018-06-06',
+                                        '2018-06-07', '2018-06-07', '2018-06-07',
+                                        '2018-06-12')))
+  d <- rbind(d, data.frame(organismID='o2',
+                           decimalLongitude = c(0.00002, 0.00001),
+                           decimalLatitude = c(1.00001, 1.00002),
+                           eventDate = as.Date(c('2018-06-06', '2018-06-07'))))
+  d[order(d$eventDate),]
+}
+
+test_that("advanced binning works", {
+  d <- advanced_binning_test_data()
   b <- bin_tracking_data(d, spatial=1000, temporal="week")
+  expect_equal(nrow(b), 5)
+  expect_equal(b$detections, c(3,2,3,1,2)) # first 4 are for organism 1, then 2 detections for organism 2
 
 })
 
 test_that("binning works with detections", {
-
+  d <- advanced_binning_test_data()
+  b1 <- bin_tracking_data(d, spatial=1000, temporal="week")
+  d$detections <- rep(2, nrow(d))
+  b2 <- bin_tracking_data(d, spatial=1000, temporal="week")
+  expect_equal(b1$organismID, b2$organismID)
 })
 
 test_that("binning works with different spatial and temporal resolution", {
-
+  d <- advanced_binning_test_data()
+  b <- bin_tracking_data(d, spatial = 1000000, temporal="week")
+  expect_equal(nrow(b), 3)
+  b <- bin_tracking_data(d, spatial = 1000000, temporal="year")
+  expect_equal(nrow(b), 2)
+  b <- bin_tracking_data(d, spatial = 1000, temporal="year")
+  expect_equal(nrow(b), 4)
+  b <- bin_tracking_data(d, spatial = 1, temporal="day")
+  expect_equal(nrow(b), nrow(d))
 })
 
 test_that("binning with invalid or missing eventDate fails", {

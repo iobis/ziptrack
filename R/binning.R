@@ -49,7 +49,7 @@ hash_datetime <- function(dates, resolution = "week") {
 #' @param temporal Temporal resolution to be used to aggregate the data (default
 #'   \code{"week"}).
 #' @return Data frame with columns \code{"organismID"}, \code{"decimalLongitude"},
-#'   \code{"decimalLatitude"}, \code{"eventDateArrival, \code{"eventDateDeparture"}
+#'   \code{"decimalLatitude"}, \code{"eventDateArrival"}, \code{"eventDateDeparture"}
 #'   and \code{"detections"}.
 #' @details The aggregation is done in a spatiotemporal grid based on the
 #'   provided spatial and temporal resolution. The spatial aggregation is done
@@ -62,6 +62,10 @@ bin_tracking_data <- function(data, spatial = 1000, temporal = 'week') {
   lonlat <- sp::CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')
   equalarea <- sp::CRS('+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0')
 
+  if(!all(c('organismID', 'decimalLongitude', 'decimalLatitude', 'eventDate') %in% colnames(data))) {
+    stop("The columns organismID, decimalLongitude, decimalLatitude and eventDate are mandatory")
+  }
+
   if((!inherits(data$eventDate, 'Date') && !inherits(data$eventDate, 'POSIXct')) || anyNA(data$eventDate) || is.null(data$eventDate)) {
     stop("eventDate values should be valid Date objects")
   }
@@ -73,13 +77,15 @@ bin_tracking_data <- function(data, spatial = 1000, temporal = 'week') {
   grid <- raster::raster(xmn = -17367530, xmx = 17367530, ymn = -7342230, ymx = 7342230, crs = equalarea, resolution = spatial)
   pts <- sf::sf_project(lonlat@projargs, equalarea@projargs, as.matrix(data[,c("decimalLongitude", "decimalLatitude")]))
   cells <- raster::cellFromXY(grid, pts)
-  dates <- lubridate::as_datetime(data$eventDate)
+  data$ziptrackOrder <- seq_len(NROW(data))
+  bins <- paste(cells, hash_datetime(data$eventDate, temporal))
+  bin_groups <- rle(bins)
+  bin_groups$values <- paste(bin_groups$values, seq_len(length(bin_groups$values)))
+  bins <- inverse.rle(bin_groups)
   data %>%
-    mutate(
-      cells,
-      time = hash_datetime(dates, temporal)) %>%
-    group_by(cells, time, organismID) %>%
-    arrange(organismID, eventDate) %>%
+    mutate(bins) %>%
+    group_by(organismID, bins) %>%
+    arrange(organismID, ziptrackOrder) %>%
     summarise(
       decimalLongitude = first(decimalLongitude),
       decimalLatitude = first(decimalLatitude),
@@ -87,5 +93,6 @@ bin_tracking_data <- function(data, spatial = 1000, temporal = 'week') {
       eventDateDeparture = max(eventDate),
       detections = sum(detections)) %>%
     ungroup() %>%
-      select_(., .dots = c("organismID", "decimalLongitude", "decimalLatitude", "eventDateArrival", "eventDateDeparture", "detections"))
+    select_(., .dots = c("organismID", "decimalLongitude", "decimalLatitude", "eventDateArrival", "eventDateDeparture", "detections")) %>%
+    arrange(organismID, eventDateArrival, eventDateDeparture)
 }
